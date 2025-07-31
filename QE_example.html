@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple QE Model</title>
+  <style>
+    body { font-family: Arial; line-height: 1.6; }
+    .entity { margin-bottom: 1em; padding: 1em; border: 1px solid #ccc; float:left;}
+	#msg-log {clear: left;}
+  </style>
+</head>
+<body>
+  <h1>QE or mini QE model (Simplified)</h1>
+  <p>This model shows how the government can raise extra money for a war via Quantitive Easing</p>
+  <p>Bonds are worth $50 when issued with a %10 tax on each cycle. Reserve bank buys bonds at a premium to garuntee the sale.</p>
+  <div id="entities"></div>
+  <div class="entity"> <button id="simulate" onclick="simulateQE()">Simulate QE</button> </div>
+  <div id="msg-log"><h2>Message Log</h2></div>
+
+  <script>
+    const state = {
+      bank: { bonds: 1, money: 0 },
+      government: { money: 0, weapons: 0 },
+      reserveBank: { moneyCreated: 0, bonds:0, costs:0}
+    };
+
+    function render() {
+      const el = document.getElementById('entities');
+      el.innerHTML = '';
+      el.innerHTML += `<div class='entity'><strong>Government</strong><br>Money: $${state.government.money}<br>Weapons: $${state.government.weapons}</div>`;
+      el.innerHTML += `<div class='entity'><strong>Reserve Bank</strong><br>Money Created: $${state.reserveBank.moneyCreated}<br>Bonds: ${state.reserveBank.bonds}<br>costs:$${state.reserveBank.costs}</div>`;
+      el.innerHTML += `<div class='entity'><strong>Bank</strong><br>Money: $${state.bank.money}<br>Bonds: ${state.bank.bonds}</div>`;
+    }
+
+    function simulateQE() {
+      const msgContainer = document.getElementById('msg-log');
+	  const similuateBtn = document.getElementById('simulate');
+	  
+	  similuateBtn.disabled = true;
+	  msgContainer.innerHTML = '<h2>Message Log</h2>';
+
+      // Step 1: Reserve Bank buys bond from Bank
+		  msgContainer.innerHTML += '<p>Step 1: Reserve Bank buys bond from Bank at an inflated price of $60 - $10 more than it is worth<\p>';
+		  state.bank.bonds -= 1;
+		  state.bank.money += 60;
+		  state.reserveBank.moneyCreated += 60;
+		  state.reserveBank.bonds += 1;
+		  render();
+
+      // Step 2: Bank gives $50 to Government (QE Effect)
+	  setTimeout(()=>{
+		  msgContainer.innerHTML += '<p>Step 2: Government issues new $50 bond to bank to raise money for war<\p>';
+		  state.bank.money -= 50;
+		  state.bank.bonds += 1;
+		  state.government.money += 50;
+		  render();
+	  },4000)
+
+      // Step 3: Government spends $49 on weapons and $1 dollar on reserve bank operating costs. Interest on bonds paid to the reserve bank for bonds is paid back to the government minus operating costs.
+	  setTimeout(()=>{
+		  msgContainer.innerHTML += '<p>Step 3: Government spends $44 on weapons. Interest on bonds paid to the reserve bank is paid back to the government minus $1 operating costs. An additional $5 interest is paid to the bank for the bond it holds (normal bond interest)<\p>';
+		  state.government.money -= 50;
+		  state.government.weapons += 44;
+		  state.bank.money += 5;
+		  state.reserveBank.costs += 1;
+		  render();
+	  },8000)
+
+      // Step 4: Government spends $49 on weapons. Interest on bonds held by the reserve bank is paid back to the government minus operating costs of $1.
+	  setTimeout(()=>{
+		  msgContainer.innerHTML += '<p>Step 4: One winner in this process is the financial institutions registered as reserve bank bond sellers. They get a normal profit from holding bonds and an extra profit from selling bonds. The extra money can be reinvested or paid out as a bonus. The other winner is the government that basically gets interest free money.<\p><p>All the money created dilutes the value of the rest of the money in the economy lowering purchase power, basically taxing existing money so the government can spend more and the bankers can make a profit.<\p>';
+		  render();
+		  similuateBtn.disabled = false;
+	  },12000)
+
+    }
+
+    render();
+  </script>
+</body>
+</html>
