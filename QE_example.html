@@ -11,7 +11,7 @@
 <body>
   <h1>QE or mini QE model (Simplified)</h1>
   <p>This model shows how the government can raise extra money for a war via Quantitive Easing</p>
-  <p>Bonds are worth $50 when issued with a %10 tax on each cycle. Reserve bank buys bonds at a premium to garuntee the sale.</p>
+  <p>Bonds are worth $50 when issued with a %10 interest on each cycle. Reserve bank buys bonds at a premium to garuntee the sale.</p>
   <div id="entities"></div>
   <div class="entity"> <button id="simulate" onclick="simulateQE()">Simulate QE</button> </div>
   <div id="msg-log"><h2>Message Log</h2></div>
@@ -67,7 +67,7 @@
 
       // Step 4: Government spends $49 on weapons. Interest on bonds held by the reserve bank is paid back to the government minus operating costs of $1.
 	  setTimeout(()=>{
-		  msgContainer.innerHTML += '<p>Step 4: One winner in this process is the financial institutions registered as reserve bank bond sellers. They get a normal profit from holding bonds and an extra profit from selling bonds. The extra money can be reinvested or paid out as a bonus. The other winner is the government that basically gets interest free money.<\p><p>All the money created dilutes the value of the rest of the money in the economy lowering purchase power, basically taxing existing money so the government can spend more and the bankers can make a profit.<\p>';
+		  msgContainer.innerHTML += '<p>Step 4: One winner in this process is the financial institutions registered as reserve bank bond sellers. They get a normal profit from holding bonds and an extra profit from selling bonds. The extra money can be reinvested or paid out as a bonus. The other winner is the government that basically gets interest free money.<\p><p>All the money created dilutes the value of the rest of the money in the economy lowering purchase power, basically taxing existing money so the government can spend more and the bankers can make a profit. Government and banks win everyone else loses<\p>';
 		  render();
 		  similuateBtn.disabled = false;
 	  },12000)
