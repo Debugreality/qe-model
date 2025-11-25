@@ -1,77 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simple QE Model</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <style>
-    body { font-family: Arial; line-height: 1.6; }
-    .entity { margin-bottom: 1em; padding: 1em; border: 1px solid #ccc; float:left;}
-	#msg-log {clear: left;}
+    :root {
+      --qe-primary: #2b6cb0;
+      --qe-accent: #e9f2ff;
+      --qe-border: #c8ddff;
+    }
+
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+
+    .qe-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background-color: var(--qe-accent);
+      color: var(--qe-primary);
+      font-weight: 700;
+    }
+
+    .info-card {
+      border: 1px solid var(--qe-border);
+      background: white;
+      box-shadow: 0 4px 8px rgba(15, 23, 42, 0.06);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+    }
+
+    .info-card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: var(--qe-primary);
+    }
+
+    #msg-log .card-body p {
+      margin-bottom: 0.5rem;
+    }
   </style>
 </head>
-<body>
-  <h1>QE or mini QE model (Simplified)</h1>
-  <p>This model shows how the government can raise extra money for a war via Quantitive Easing</p>
-  <p>Bonds are worth $50 when issued with a %10 interest on each cycle. Reserve bank buys bonds at a premium to garuntee the sale.</p>
-  <div id="entities"></div>
-  <div class="entity"> <button id="simulate" onclick="simulateQE()">Simulate QE</button> </div>
-  <div id="msg-log"><h2>Message Log</h2></div>
+<body class="py-4">
+  <div class="container">
+    <header class="mb-4 text-center">
+      <h1 class="fw-bold">QE or mini QE model (Simplified)</h1>
+      <p class="lead mb-1">This model shows how the government can raise extra money for a war via Quantitive Easing.</p>
+      <p class="text-muted">Bonds are worth $50 when issued with a 10% interest on each cycle. Reserve bank buys bonds at a premium to guarantee the sale.</p>
+    </header>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="qe-icon">QE</span>
+        <span class="text-secondary">Track money, bonds, and weapons as QE unfolds.</span>
+      </div>
+      <button id="simulate" class="btn btn-primary px-4" onclick="simulateQE()">Simulate QE</button>
+    </div>
+
+    <div id="entities" class="row g-3 mb-4"></div>
+
+    <section id="msg-log" class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h2 class="h5 mb-0 text-primary">Message Log</h2>
+      </div>
+      <div class="card-body text-secondary"></div>
+    </section>
+  </div>
 
   <script>
     const state = {
       bank: { bonds: 1, money: 0 },
       government: { money: 0, weapons: 0 },
-      reserveBank: { moneyCreated: 0, bonds:0, costs:0}
+      reserveBank: { moneyCreated: 0, bonds: 0, costs: 0 }
     };
 
     function render() {
       const el = document.getElementById('entities');
-      el.innerHTML = '';
-      el.innerHTML += `<div class='entity'><strong>Government</strong><br>Money: $${state.government.money}<br>Weapons: $${state.government.weapons}</div>`;
-      el.innerHTML += `<div class='entity'><strong>Reserve Bank</strong><br>Money Created: $${state.reserveBank.moneyCreated}<br>Bonds: ${state.reserveBank.bonds}<br>costs:$${state.reserveBank.costs}</div>`;
-      el.innerHTML += `<div class='entity'><strong>Bank</strong><br>Money: $${state.bank.money}<br>Bonds: ${state.bank.bonds}</div>`;
+      el.innerHTML = `
+        <div class="col-md-4">
+          <div class="info-card h-100">
+            <h2 class="h6 text-uppercase">Government</h2>
+            <p class="mb-1">Money: <strong>$${state.government.money}</strong></p>
+            <p class="mb-0">Weapons: <strong>$${state.government.weapons}</strong></p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-card h-100">
+            <h2 class="h6 text-uppercase">Reserve Bank</h2>
+            <p class="mb-1">Money Created: <strong>$${state.reserveBank.moneyCreated}</strong></p>
+            <p class="mb-1">Bonds: <strong>${state.reserveBank.bonds}</strong></p>
+            <p class="mb-0">Costs: <strong>$${state.reserveBank.costs}</strong></p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="info-card h-100">
+            <h2 class="h6 text-uppercase">Bank</h2>
+            <p class="mb-1">Money: <strong>$${state.bank.money}</strong></p>
+            <p class="mb-0">Bonds: <strong>${state.bank.bonds}</strong></p>
+          </div>
+        </div>`;
     }
 
     function simulateQE() {
-      const msgContainer = document.getElementById('msg-log');
-	  const similuateBtn = document.getElementById('simulate');
-	  
-	  similuateBtn.disabled = true;
-	  msgContainer.innerHTML = '<h2>Message Log</h2>';
+      const logBody = document.querySelector('#msg-log .card-body');
+      const simulateBtn = document.getElementById('simulate');
 
-      // Step 1: Reserve Bank buys bond from Bank
-		  msgContainer.innerHTML += '<p>Step 1: Reserve Bank buys bond from Bank at an inflated price of $60 - $10 more than it is worth<\p>';
-		  state.bank.bonds -= 1;
-		  state.bank.money += 60;
-		  state.reserveBank.moneyCreated += 60;
-		  state.reserveBank.bonds += 1;
-		  render();
+      simulateBtn.disabled = true;
+      logBody.innerHTML = '';
 
-      // Step 2: Bank gives $50 to Government (QE Effect)
-	  setTimeout(()=>{
-		  msgContainer.innerHTML += '<p>Step 2: Government issues new $50 bond to bank to raise money for war<\p>';
-		  state.bank.money -= 50;
-		  state.bank.bonds += 1;
-		  state.government.money += 50;
-		  render();
-	  },4000)
+      const addLog = (message) => {
+        const entry = document.createElement('p');
+        entry.textContent = message;
+        logBody.appendChild(entry);
+      };
 
-      // Step 3: Government spends $49 on weapons and $1 dollar on reserve bank operating costs. Interest on bonds paid to the reserve bank for bonds is paid back to the government minus operating costs.
-	  setTimeout(()=>{
-		  msgContainer.innerHTML += '<p>Step 3: Government spends $44 on weapons. Interest on bonds paid to the reserve bank is paid back to the government minus $1 operating costs. An additional $5 interest is paid to the bank for the bond it holds (normal bond interest)<\p>';
-		  state.government.money -= 50;
-		  state.government.weapons += 44;
-		  state.bank.money += 5;
-		  state.reserveBank.costs += 1;
-		  render();
-	  },8000)
+      addLog('Step 1: Reserve Bank buys bond from Bank at an inflated price of $60 - $10 more than it is worth.');
+      state.bank.bonds -= 1;
+      state.bank.money += 60;
+      state.reserveBank.moneyCreated += 60;
+      state.reserveBank.bonds += 1;
+      render();
 
-      // Step 4: Government spends $49 on weapons. Interest on bonds held by the reserve bank is paid back to the government minus operating costs of $1.
-	  setTimeout(()=>{
-		  msgContainer.innerHTML += '<p>Step 4: One winner in this process is the financial institutions registered as reserve bank bond sellers. They get a normal profit from holding bonds and an extra profit from selling bonds. The extra money can be reinvested or paid out as a bonus. The other winner is the government that basically gets interest free money.<\p><p>All the money created dilutes the value of the rest of the money in the economy lowering purchase power, basically taxing existing money so the government can spend more and the bankers can make a profit. Government and banks win everyone else loses<\p>';
-		  render();
-		  similuateBtn.disabled = false;
-	  },12000)
+      setTimeout(() => {
+        addLog('Step 2: Government issues new $50 bond to bank to raise money for war.');
+        state.bank.money -= 50;
+        state.bank.bonds += 1;
+        state.government.money += 50;
+        render();
+      }, 4000);
 
+      setTimeout(() => {
+        addLog('Step 3: Government spends $44 on weapons. Interest on bonds paid to the reserve bank is returned to the government minus $1 operating cost. An additional $5 interest is paid to the bank for the bond it holds.');
+        state.government.money -= 50;
+        state.government.weapons += 44;
+        state.bank.money += 5;
+        state.reserveBank.costs += 1;
+        render();
+      }, 8000);
+
+      setTimeout(() => {
+        addLog('Step 4: Financial institutions selling reserve bank bonds profit from both holding and selling bonds, while the government secures interest-free spending. The expanded money supply dilutes existing value, effectively taxing holders of cash.');
+        render();
+        simulateBtn.disabled = false;
+      }, 12000);
     }
 
     render();
