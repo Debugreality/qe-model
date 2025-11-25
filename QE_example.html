@@ -122,6 +122,101 @@
     #msg-log .card-body p {
       margin-bottom: 0.5rem;
     }
+
+    .flow-card {
+      border: 1px solid var(--qe-border);
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+    }
+
+    .flow-wrapper {
+      position: relative;
+      overflow: hidden;
+    }
+
+    svg#flow-diagram {
+      width: 100%;
+      height: 340px;
+    }
+
+    .node {
+      fill: white;
+      stroke: var(--qe-primary);
+      stroke-width: 2px;
+      filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.08));
+    }
+
+    .node text {
+      fill: var(--qe-text);
+      font-weight: 700;
+    }
+
+    .flow-arrow {
+      fill: none;
+      stroke: #64748b;
+      stroke-width: 2.5px;
+      stroke-dasharray: 6 8;
+      marker-end: url(#arrowhead);
+      opacity: 0.5;
+    }
+
+    .flow-arrow.active {
+      stroke: var(--qe-primary);
+      opacity: 1;
+      animation: arrow-move 1.4s linear infinite;
+    }
+
+    @keyframes arrow-move {
+      from {
+        stroke-dashoffset: 0;
+      }
+      to {
+        stroke-dashoffset: 28;
+      }
+    }
+
+    .flow-label {
+      position: absolute;
+      right: 1rem;
+      bottom: 1rem;
+      background: rgba(43, 108, 176, 0.08);
+      color: var(--qe-primary);
+      padding: 0.6rem 0.9rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--qe-border);
+      backdrop-filter: blur(4px);
+    }
+
+    .timeline-step.active .timeline-card {
+      border-color: var(--qe-primary);
+      box-shadow: 0 8px 18px rgba(43, 108, 176, 0.15);
+    }
+
+    .timeline-step.active .timeline-badge {
+      background: #1d4ed8;
+    }
+
+    .value-flash {
+      animation: flash 0.9s ease;
+    }
+
+    .card-pulse {
+      animation: pulse 1.2s ease;
+    }
+
+    @keyframes flash {
+      0% { background-color: rgba(43, 108, 176, 0.2); }
+      50% { background-color: rgba(43, 108, 176, 0.35); }
+      100% { background-color: transparent; }
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(43, 108, 176, 0.3); }
+      70% { box-shadow: 0 0 0 12px rgba(43, 108, 176, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(43, 108, 176, 0); }
+    }
   </style>
 </head>
 <body class="py-4">
@@ -175,6 +270,51 @@
         <div id="entities" class="row g-3"></div>
       </section>
 
+      <section class="flow-card p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+          <div>
+            <div class="text-uppercase text-primary fw-semibold small">Flow diagram</div>
+            <h2 class="h5 mb-1">Transaction routes</h2>
+            <p class="mb-0 text-secondary">Arrows animate to show where funds move at each step.</p>
+          </div>
+          <div class="badge text-bg-light text-primary border">Live highlight</div>
+        </div>
+        <div class="flow-wrapper">
+          <svg id="flow-diagram" viewBox="0 0 700 340" aria-label="QE flow diagram">
+            <defs>
+              <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" fill="var(--qe-primary)">
+                <polygon points="0 0, 10 3.5, 0 7" />
+              </marker>
+            </defs>
+            <g class="nodes">
+              <g class="node" transform="translate(90,70)">
+                <rect width="150" height="80" rx="12" ry="12"></rect>
+                <text x="75" y="45" text-anchor="middle">Government</text>
+              </g>
+              <g class="node" transform="translate(420,60)">
+                <rect width="150" height="80" rx="12" ry="12"></rect>
+                <text x="75" y="45" text-anchor="middle">Reserve Bank</text>
+              </g>
+              <g class="node" transform="translate(260,220)">
+                <rect width="150" height="80" rx="12" ry="12"></rect>
+                <text x="75" y="45" text-anchor="middle">Commercial Bank</text>
+              </g>
+              <g class="node" transform="translate(40,220)">
+                <rect width="170" height="80" rx="12" ry="12"></rect>
+                <text x="85" y="45" text-anchor="middle">Public (dilution)</text>
+              </g>
+            </g>
+            <g class="arrows">
+              <path data-path="bank-to-reserve" class="flow-arrow" d="M335 220 C 360 170 450 140 495 110" />
+              <path data-path="reserve-to-bank" class="flow-arrow" d="M495 110 C 455 140 365 170 335 220" />
+              <path data-path="bank-to-government" class="flow-arrow" d="M335 220 C 280 180 170 140 165 110" />
+              <path data-path="government-to-public" class="flow-arrow" d="M165 110 C 120 170 110 200 125 220" />
+            </g>
+          </svg>
+          <div id="flow-label" class="flow-label">Click “Simulate QE” to start the animated path.</div>
+        </div>
+      </section>
+
       <section id="msg-log" aria-labelledby="log-heading" class="card shadow-sm">
         <div class="card-header bg-white">
           <h2 id="log-heading" class="h5 mb-0 text-primary">Simulation log</h2>
@@ -203,6 +343,8 @@
       reserveBank: { moneyCreated: 0, bonds: 0, costs: 0 }
     };
 
+    let previousState = JSON.parse(JSON.stringify(state));
+
     const timelineSteps = [
       {
         title: 'Reserve bank purchase',
@@ -230,14 +372,14 @@
       const el = document.getElementById('entities');
       el.innerHTML = `
         <div class="col-md-4">
-          <div class="info-card d-flex flex-column gap-2">
+          <div class="info-card d-flex flex-column gap-2" data-entity="government">
             <div class="d-flex justify-content-between align-items-center">
               <h2 class="h6 mb-0">Government</h2>
               <span class="badge text-bg-light text-primary border">Issuer</span>
             </div>
             <div class="label">Balance summary</div>
-            <p class="mb-1">Money: <strong>$${state.government.money}</strong></p>
-            <p class="mb-1">Weapons: <strong>$${state.government.weapons}</strong></p>
+            <p class="mb-1">Money: <strong class="value" data-key="government.money">$${state.government.money}</strong></p>
+            <p class="mb-1">Weapons: <strong class="value" data-key="government.weapons">$${state.government.weapons}</strong></p>
             <div class="label">Profit / impact</div>
             <ul class="text-secondary small">
               <li>Raises $50 at face value for immediate spending.</li>
@@ -246,15 +388,15 @@
           </div>
         </div>
         <div class="col-md-4">
-          <div class="info-card d-flex flex-column gap-2">
+          <div class="info-card d-flex flex-column gap-2" data-entity="reserveBank">
             <div class="d-flex justify-content-between align-items-center">
               <h2 class="h6 mb-0">Reserve Bank</h2>
               <span class="badge text-bg-light text-primary border">Buyer</span>
             </div>
             <div class="label">Balance summary</div>
-            <p class="mb-1">Money Created: <strong>$${state.reserveBank.moneyCreated}</strong></p>
-            <p class="mb-1">Bonds: <strong>${state.reserveBank.bonds}</strong></p>
-            <p class="mb-1">Costs: <strong>$${state.reserveBank.costs}</strong></p>
+            <p class="mb-1">Money Created: <strong class="value" data-key="reserveBank.moneyCreated">$${state.reserveBank.moneyCreated}</strong></p>
+            <p class="mb-1">Bonds: <strong class="value" data-key="reserveBank.bonds">${state.reserveBank.bonds}</strong></p>
+            <p class="mb-1">Costs: <strong class="value" data-key="reserveBank.costs">$${state.reserveBank.costs}</strong></p>
             <div class="label">Profit / impact</div>
             <ul class="text-secondary small">
               <li>Expands money supply to guarantee bond sales.</li>
@@ -263,21 +405,23 @@
           </div>
         </div>
         <div class="col-md-4">
-          <div class="info-card d-flex flex-column gap-2">
+          <div class="info-card d-flex flex-column gap-2" data-entity="bank">
             <div class="d-flex justify-content-between align-items-center">
               <h2 class="h6 mb-0">Bank</h2>
               <span class="badge text-bg-light text-primary border">Dealer</span>
             </div>
             <div class="label">Balance summary</div>
-            <p class="mb-1">Money: <strong>$${state.bank.money}</strong></p>
-            <p class="mb-1">Bonds: <strong>${state.bank.bonds}</strong></p>
+            <p class="mb-1">Money: <strong class="value" data-key="bank.money">$${state.bank.money}</strong></p>
+            <p class="mb-1">Bonds: <strong class="value" data-key="bank.bonds">${state.bank.bonds}</strong></p>
             <div class="label">Profit / impact</div>
             <ul class="text-secondary small">
               <li>Collects $10 premium from central bank purchase.</li>
               <li>Earns $5 coupon on the new bond it holds.</li>
             </ul>
           </div>
-        </div>`;
+      </div>`;
+
+      animateDifferences();
     }
 
     function renderTimeline() {
@@ -301,6 +445,8 @@
       simulateBtn.disabled = true;
       logBody.innerHTML = '';
 
+      setActiveStep(0);
+
       const addLog = (message) => {
         const entry = document.createElement('p');
         entry.textContent = message;
@@ -313,6 +459,7 @@
       state.reserveBank.moneyCreated += 60;
       state.reserveBank.bonds += 1;
       renderEntities();
+      setActiveStep(1);
 
       setTimeout(() => {
         addLog('Step 2: Government issues new $50 bond to bank to raise money for war.');
@@ -320,6 +467,7 @@
         state.bank.bonds += 1;
         state.government.money += 50;
         renderEntities();
+        setActiveStep(2);
       }, 4000);
 
       setTimeout(() => {
@@ -329,17 +477,63 @@
         state.bank.money += 5;
         state.reserveBank.costs += 1;
         renderEntities();
+        setActiveStep(3);
       }, 8000);
 
       setTimeout(() => {
         addLog('Step 4: Financial institutions selling reserve bank bonds profit from both holding and selling bonds, while the government secures interest-free spending. The expanded money supply dilutes existing value, effectively taxing holders of cash.');
         renderEntities();
+        setActiveStep(4);
         simulateBtn.disabled = false;
       }, 12000);
     }
 
+    function animateDifferences() {
+      const values = document.querySelectorAll('.value');
+      values.forEach((valueEl) => {
+        const key = valueEl.getAttribute('data-key');
+        const [entity, prop] = key.split('.');
+        const newValue = state[entity][prop];
+        const oldValue = previousState[entity][prop];
+        if (newValue !== oldValue) {
+          valueEl.classList.add('value-flash');
+          const card = valueEl.closest('.info-card');
+          card.classList.add('card-pulse');
+          setTimeout(() => valueEl.classList.remove('value-flash'), 900);
+          setTimeout(() => card.classList.remove('card-pulse'), 1200);
+        }
+      });
+      previousState = JSON.parse(JSON.stringify(state));
+    }
+
+    const flowMap = {
+      0: { label: 'Ready to start – follow each transfer below.', paths: [] },
+      1: { label: 'Reserve Bank inflates purchase → Bank liquidity rises.', paths: ['reserve-to-bank'] },
+      2: { label: 'Bank funds Government via new bond purchase.', paths: ['bank-to-government'] },
+      3: { label: 'Government spending circulates, dilution hits the public.', paths: ['government-to-public'] },
+      4: { label: 'Aftermath: previous flows settle, market holds more cash.', paths: [] }
+    };
+
+    function setActiveStep(stepIndex) {
+      const timelineItems = document.querySelectorAll('.timeline-step');
+      timelineItems.forEach((item, idx) => {
+        item.classList.toggle('active', idx === stepIndex - 1);
+      });
+
+      const flowLabel = document.getElementById('flow-label');
+      const { label, paths } = flowMap[stepIndex];
+      flowLabel.textContent = label;
+
+      const arrows = document.querySelectorAll('.flow-arrow');
+      arrows.forEach((arrow) => {
+        const id = arrow.getAttribute('data-path');
+        arrow.classList.toggle('active', paths.includes(id));
+      });
+    }
+
     renderEntities();
     renderTimeline();
+    setActiveStep(0);
   </script>
 </body>
 </html>
